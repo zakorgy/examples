@@ -1,0 +1,20 @@
+[package]
+name = "triangle"
+version = "0.1.0"
+authors = ["Zakor Gyula <zakorgy@inf.u-szeged.hu>"]
+build = "build.rs"
+
+[dependencies]
+cgmath = "0.12.0"
+glutin = "0.7.1"
+vulkano = "0.3.2"
+vulkano-win = "0.3.2"
+winit = "0.5.1"
+offscreen_gl_context = "0.6"
+gleam = "0.2.30"
+euclid = "0.11"
+lodepng = "1.0.0"
+image = "0.12.3"
+
+[build-dependencies]
+vulkano-shaders = "0.3.1"
