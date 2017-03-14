@@ -119,7 +119,7 @@ fn compile_shaders(handles: &GlHandles) {
     gl::use_program(handles.program.get());
 }
 
-fn draw(handles: &GlHandles) {
+fn gl_draw(handles: &GlHandles) {
     gl::clear_color(CLEAR_COLOR.0, CLEAR_COLOR.1, CLEAR_COLOR.2, CLEAR_COLOR.3);
     gl::clear(gl::COLOR_BUFFER_BIT);
 
@@ -202,10 +202,6 @@ pub fn main() {
         panic!("Something went wrong :/.");
     }
 
-    // Draw in the FBO and read the pixel data from it
-    draw(&handles);
-    let pixel_data = gl::read_pixels(0, 0, WIN_WIDTH, WIN_HEIGTH, gl::RGBA, gl::UNSIGNED_BYTE);
-
     // Create image from pixeldata, this is just for check
     /*let path = &std::path::Path::new("write_test.png");
     if let Err(e) = lodepng::encode_file(path,
@@ -227,7 +223,7 @@ pub fn main() {
                 _ => {},
             }
         }
-        draw(&handles);
+        gl_draw(&handles);
         window.swap_buffers().unwrap();
     }*/
 
@@ -368,31 +364,36 @@ pub fn main() {
         vulkano::framebuffer::Framebuffer::new(&renderpass, [images[0].dimensions()[0], images[0].dimensions()[1], 1], attachments).unwrap()
     }).collect::<Vec<_>>();
 
-    let pixel_buffer = {
-        let image_data_chunks = pixel_data.chunks(4).map(|c| [c[0], c[1], c[2], c[3]]);
-
-        vulkano::buffer::cpu_access::CpuAccessibleBuffer::<[[u8;4]]>
-            ::from_iter(&device, &vulkano::buffer::BufferUsage::all(),
-                        Some(queue.family()), image_data_chunks)
-                        .expect("failed to create buffer")
-
-    };
-
-    let command_buffers = framebuffers.iter().map(|framebuffer| {
-        vulkano::command_buffer::PrimaryCommandBufferBuilder::new(&device, queue.family())
-            .copy_buffer_to_color_image(&pixel_buffer, &texture, 0, 0 .. 1, [0, 0, 0],
-                                        [texture.dimensions().width(), texture.dimensions().height(), 1])
-            //.clear_color_image(&texture, [0.0, 1.0, 0.0, 1.0])
-            .draw_inline(&renderpass, &framebuffer, renderpass::ClearValues {
-                color: [0.0, 0.0, 1.0, 1.0]
-            })
-            .draw(&pipeline, &vertex_buffer, &vulkano::command_buffer::DynamicState::none(),
-                  &set, &())
-            .draw_end()
-            .build()
-    }).collect::<Vec<_>>();
-
     'main: loop {
+        // Draw in the FBO and read the pixel data from it
+        gl_draw(&handles);
+        let pixel_data = gl::read_pixels(0, 0, WIN_WIDTH, WIN_HEIGTH, gl::RGBA, gl::UNSIGNED_BYTE);
+
+        let pixel_buffer = {
+            let image_data_chunks = pixel_data.chunks(4).map(|c| [c[0], c[1], c[2], c[3]]);
+
+            vulkano::buffer::cpu_access::CpuAccessibleBuffer::<[[u8;4]]>
+                ::from_iter(&device, &vulkano::buffer::BufferUsage::all(),
+                            Some(queue.family()), image_data_chunks)
+                            .expect("failed to create buffer")
+
+        };
+
+        let command_buffers = framebuffers.iter().map(|framebuffer| {
+            vulkano::command_buffer::PrimaryCommandBufferBuilder::new(&device, queue.family())
+                .copy_buffer_to_color_image(&pixel_buffer, &texture, 0, 0 .. 1, [0, 0, 0],
+                                            [texture.dimensions().width(), texture.dimensions().height(), 1])
+                //.clear_color_image(&texture, [0.0, 1.0, 0.0, 1.0])
+                .draw_inline(&renderpass, &framebuffer, renderpass::ClearValues {
+                    color: [0.0, 0.0, 1.0, 1.0]
+                })
+                .draw(&pipeline, &vertex_buffer, &vulkano::command_buffer::DynamicState::none(),
+                      &set, &())
+                .draw_end()
+                .build()
+        }).collect::<Vec<_>>();
+
+
         let image_num = swapchain.acquire_next_image(Duration::new(10, 0)).unwrap();
         vulkano::command_buffer::submit(&command_buffers[image_num], &queue).unwrap();
         swapchain.present(&queue, image_num).unwrap();
