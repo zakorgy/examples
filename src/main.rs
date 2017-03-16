@@ -180,10 +180,6 @@ pub fn main() {
     let fbo = gl::gen_framebuffers(1)[0];
     gl::bind_framebuffer(gl::FRAMEBUFFER, fbo);
 
-    if gl::check_frame_buffer_status(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
-        panic!("Something went wrong :/.");
-    }
-
     let extensions = vulkano_win::required_extensions();
     let instance = vulkano::instance::Instance::new(None, &extensions, &[]).expect("failed to create instance");
 
@@ -329,6 +325,10 @@ pub fn main() {
         gl::bind_renderbuffer(gl::RENDERBUFFER, color_render_buffer);
         gl::renderbuffer_storage(gl::RENDERBUFFER, gl::RGBA, WIN_WIDTH, WIN_HEIGTH);
         gl::framebuffer_renderbuffer(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::RENDERBUFFER, color_render_buffer);
+
+        if gl::check_frame_buffer_status(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
+            panic!("Something went wrong :/.");
+        }
 
         let pixel_data = gl::read_pixels(0, 0, WIN_WIDTH, WIN_HEIGTH, gl::RGBA, gl::UNSIGNED_BYTE);
 
