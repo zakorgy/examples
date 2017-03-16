@@ -154,7 +154,6 @@ fn gl_draw(handles: &GlHandles) {
         ];
 
     let scale_pos = gl::get_uniform_location(handles.program.get(), "scale");
-    // gl::uniform_1f(scale, handles.scale.get().sin());
     gl::uniform_matrix_4fv(scale_pos, false, &rot_matrix);
 
     gl::draw_arrays(gl::TRIANGLES, 0, 3);
@@ -167,17 +166,6 @@ pub fn main() {
                                                           ColorAttachmentType::Renderbuffer,
                                                           None).unwrap();
     offscreen_ctx.make_current().unwrap();
-
-    /*let window = glutin::WindowBuilder::new()
-        .with_title("Triangle example".to_string())
-        .with_dimensions(WIN_WIDTH as u32, WIN_HEIGTH as u32)
-        .with_vsync()
-        .build()
-        .unwrap();
-
-    unsafe { window.make_current().unwrap() };
-    gl::load_with(|s| window.get_proc_address(s) as *const _);*/
-
 
     let handles: GlHandles = GlHandles::new();
     // Create VAO and VBOs
@@ -201,32 +189,6 @@ pub fn main() {
     if gl::check_frame_buffer_status(gl::FRAMEBUFFER) != gl::FRAMEBUFFER_COMPLETE {
         panic!("Something went wrong :/.");
     }
-
-    // Create image from pixeldata, this is just for check
-    /*let path = &std::path::Path::new("write_test.png");
-    if let Err(e) = lodepng::encode_file(path,
-                                         &pixel_data,
-                                         WIN_WIDTH as usize,
-                                         WIN_HEIGTH as usize,
-                                         lodepng::LCT_RGBA,
-                                         8) {
-            panic!("failed to write png: {:?}", e);
-    }
-
-
-
-    'main: loop {
-        for event in window.poll_events() {
-            match event {
-                glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) |
-                glutin::Event::Closed => break 'main,
-                _ => {},
-            }
-        }
-        gl_draw(&handles);
-        window.swap_buffers().unwrap();
-    }*/
-
 
     let extensions = vulkano_win::required_extensions();
     let instance = vulkano::instance::Instance::new(None, &extensions, &[]).expect("failed to create instance");
